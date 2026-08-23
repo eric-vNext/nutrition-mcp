@@ -108,6 +108,7 @@ Read the story behind it: [How I Replaced MyFitnessPal and Other Apps with a Sin
 | `SUPABASE_SECRET_KEY`  | Supabase service role key (bypasses RLS)                                      |
 | `OAUTH_CLIENT_ID`      | Random string for OAuth client identification                                 |
 | `OAUTH_CLIENT_SECRET`  | Random string for OAuth client authentication                                 |
+| `OAUTH_ALLOWED_REDIRECT_URIS` | Comma-separated exact-match allow-list for `/authorize`'s `redirect_uri`. Use `https://claude.ai/api/mcp/auth_callback,https://claude.com/api/mcp/auth_callback` for Claude.ai; add any other client's registered `redirect_uri` (visible in the `registered_clients` table after it first connects) |
 | `GOOGLE_CLIENT_ID`     | _(optional)_ Google OAuth client ID for "Sign in with Google"                 |
 | `GOOGLE_CLIENT_SECRET` | _(optional)_ Google OAuth client secret                                       |
 | `OFF_USER_AGENT`       | Open Food Facts User-Agent for barcode lookups, in the form `AppName (email)` |

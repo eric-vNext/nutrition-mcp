@@ -10,6 +10,7 @@ import { test, expect, describe, afterEach } from "bun:test";
 // src/oauth.test.ts, and ||= so a real .env still wins.
 process.env.OAUTH_CLIENT_ID ||= "test-client-id";
 process.env.OAUTH_CLIENT_SECRET ||= "test-client-secret";
+process.env.OAUTH_ALLOWED_REDIRECT_URIS ||= "https://example.com/callback";
 
 const { app, setShuttingDownForTest } = await import("./index.js");
 

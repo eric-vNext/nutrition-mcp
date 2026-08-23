@@ -131,6 +131,32 @@ export function createOAuthRouter() {
         throw new Error("Missing OAUTH_CLIENT_ID or OAUTH_CLIENT_SECRET");
     }
 
+    // Exact-match allow-list for /authorize's redirect_uri. Without this, anyone
+    // can send a victim a login link pointing the post-login redirect at a
+    // domain they control, phish the real password, and walk off with a
+    // 365-day access token — the login page itself is genuine, only the
+    // destination after login is hijacked. `/register` is unauthenticated by
+    // spec (MCP dynamic client registration), so it can't be the trust
+    // boundary; this fixed list, set by the server operator, is.
+    //
+    // For Claude.ai custom connectors this is https://claude.ai/api/mcp/auth_callback
+    // (Anthropic has flagged a possible future move to claude.com — list both).
+    // For any other MCP client, connect once, then check the
+    // `registered_clients` table for the redirect_uri it registered, and pin
+    // the exact value(s) here.
+    const allowedRedirectUris = new Set(
+        (process.env.OAUTH_ALLOWED_REDIRECT_URIS ?? "")
+            .split(",")
+            .map((uri) => uri.trim())
+            .filter(Boolean),
+    );
+
+    if (allowedRedirectUris.size === 0) {
+        throw new Error(
+            "Missing OAUTH_ALLOWED_REDIRECT_URIS — set it to the exact redirect_uri(s) your MCP client(s) use, comma-separated",
+        );
+    }
+
     // Dynamic client registration (required by MCP spec)
     oauth.post("/register", async (c) => {
         const body = await c.req.json();
@@ -168,6 +194,27 @@ export function createOAuthRouter() {
         }
         if (reqClientId !== clientId) {
             return c.json({ error: "invalid_client" }, 400);
+        }
+        if (!allowedRedirectUris.has(redirectUri)) {
+            return c.json(
+                {
+                    error: "invalid_request",
+                    error_description: "redirect_uri is not allow-listed",
+                },
+                400,
+            );
+        }
+        // PKCE is optional per the historic OAuth 2.0 spec but mandatory in
+        // OAuth 2.1 / the MCP authorization spec — require it here so a leaked
+        // or misdirected auth code alone is never enough to redeem a token.
+        if (!codeChallenge) {
+            return c.json(
+                {
+                    error: "invalid_request",
+                    error_description: "code_challenge (PKCE) is required",
+                },
+                400,
+            );
         }
 
         cleanExpiredSessions();

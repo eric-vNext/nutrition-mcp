@@ -8,6 +8,7 @@ import { _resetBuckets } from "./rate-limit.js";
 // exercised by the rate-limit tests below.
 process.env.OAUTH_CLIENT_ID ||= "test-client-id";
 process.env.OAUTH_CLIENT_SECRET ||= "test-client-secret";
+process.env.OAUTH_ALLOWED_REDIRECT_URIS ||= "https://example.com/callback";
 
 // Guards the nonce representation: Supabase expects the SHA-256 *hex* digest sent
 // to Google (not base64url). A regression to base64URLEncode would break sign-in.
